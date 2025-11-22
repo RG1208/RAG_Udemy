@@ -1,0 +1,19 @@
+Introduction to Python
+
+Python is a high-level, general-purpose programming language known for its simplicity, readability, and powerful capabilities. Created by Guido van Rossum and first released in 1991, Python has become one of the most popular programming languages in the world, used by beginners and professionals alike.
+
+Python’s clean and easy-to-understand syntax makes it ideal for learning programming concepts. At the same time, its rich ecosystem of libraries and frameworks allows developers to build a wide range of applications — from small scripts to large-scale systems.
+
+Python is widely used in:
+    1. Web Development (Django, Flask)
+    2. Data Science & Machine Learning (NumPy, Pandas, Scikit-learn, TensorFlow)
+    3. Automation & Scripting
+    4. Artificial Intelligence
+    5. Scientific Computing
+    6. Cybersecurity
+    7. Game Development
+    8. IoT & Embedded Systems
+
+Python follows a philosophy known as “The Zen of Python,” which emphasizes writing code that is simple, readable, and maintainable. Because of its versatility and beginner-friendly nature, Python has become a top choice for students, developers, researchers, and organizations across industries.
+
+In short, Python is a language that helps you think clearly, work efficiently, and build powerful solutions with ease.
