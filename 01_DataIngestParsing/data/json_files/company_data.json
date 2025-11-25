@@ -1,0 +1,61 @@
+{
+  "company": "Company 1",
+  "employees": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "department": "Sales",
+      "role": "Manager",
+      "projects": [
+        {
+          "name": "Project A",
+          "duration_months": 6
+        },
+        {
+          "name": "Project B",
+          "duration_months": 12
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Jane Smith",
+      "department": "Development",
+      "role": "Developer",
+      "projects": [
+        {
+          "name": "Project C",
+          "duration_months": 9
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Emily Johnson",
+      "department": "Marketing",
+      "role": "Coordinator",
+      "projects": [
+        {
+          "name": "Project D",
+          "duration_months": 4
+        },
+        {
+          "name": "Project E",
+          "duration_months": 8
+        }
+      ]
+    }
+  ],
+  "departments": {
+    "engineering": {
+      "head": "Alice Brown",
+      "budget": 500000,
+      "team_size": 25
+    },
+    "sales": {
+      "head": "Bob White",
+      "budget": 300000,
+      "team_size": 15
+    }
+  }
+}
