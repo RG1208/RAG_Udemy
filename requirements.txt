@@ -171,3 +171,5 @@ docx2txt
 unstructured[docx]
 openpyxl
 jq
+numpy
+matplotlib
