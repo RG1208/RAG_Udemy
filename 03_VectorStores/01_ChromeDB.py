@@ -33,6 +33,7 @@ from langchain_community.vectorstores import Chroma
 import numpy as np
 from typing import List
 
+# ----------------------------------------------------------------------------------------------------------------------
 
 # 1. Creating sample data(documents)
 sample_docs = [
@@ -63,6 +64,8 @@ for idx, content in enumerate(sample_docs):
 print("Sample Files created")
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+
 # 2. Document Loading
 from langchain_community.document_loaders import DirectoryLoader
 
@@ -75,4 +78,46 @@ loader=DirectoryLoader(
 documents=loader.load()
 
 print(f"{len(documents)} documents loaded successfully.")
-print(f"Sample Document Content:\n{documents[0].page_content[:200]}...\n")
+# print(f"Sample Document Content:\n{documents[0].page_content[:200]}...\n")
+# print(f"Sample Document Content:\n{documents[1].page_content[:200]}...\n")
+# print(f"Sample Document Content:\n{documents[2].page_content[:200]}...\n")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+#3. Document Splitting
+text_splitter=RecursiveCharacterTextSplitter(
+    chunk_size=500,
+    chunk_overlap=50,
+    length_function=len,
+    separators=[" "]
+)
+chunks=text_splitter.split_documents(documents)
+# print(f"{len(chunks)} chunks created from {len(documents)} documents successfully.")
+# print(f"Sample Chunk Content:\n{chunks[0].page_content}...\n")
+
+# ----------------------------------------------------------------------------------------------------------------------
+#4. Creating Embeddings
+
+os.environ["OPENAI_API_KEY"]=os.getenv("OPENAI_API_KEY")
+
+embeddings=OpenAIEmbeddings()
+
+# ----------------------------------------------------------------------------------------------------------------------
+# 5. Creating Vector Store using ChromaDb and storing chunks in vector representation
+persist_directory="./chromadb_data"
+vectordb=Chroma.from_documents(
+    documents=chunks,
+    embedding=embeddings,
+    persist_directory=persist_directory,
+    collection_name="rag_collection"
+)
+
+print(f"Vector Store created with {vectordb._collection.count()} vectors and persisted at {persist_directory} successfully.")
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Test Similarity Search
+query="What are the types of machine learning?"
+similar_docs=vectordb.similarity_search(query,k=2)
+print("Top 2 similar documents for the query: ")
+for idx, doc in enumerate(similar_docs):
+    print(f"Document {idx+1} Content:\n{doc.page_content}\n")

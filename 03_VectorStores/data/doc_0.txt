@@ -1,4 +1,0 @@
-
-    Machine Learning Fundamentals
-    Machine Learning is a subset of artificial intelligence that focuses on building systems capable of learning from data without being explicitly programmed for every rule. Instead of following static instructions, machine learning algorithms identify patterns and relationships within large datasets to make predictions or decisions. Common techniques include supervised learning, where models train on labeled data to map inputs to outputs, and unsupervised learning, which finds hidden structures in unlabeled data. This technology powers diverse applications, from email spam filters and recommendation engines to fraud detection systems.
-    
