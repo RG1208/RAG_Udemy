@@ -120,7 +120,7 @@ vectordb=Chroma.from_documents(
 print(f"Vector Store created with {vectordb._collection.count()} vectors and persisted at {persist_directory} successfully.")
 
 # ----------------------------------------------------------------------------------------------------------------------
-# Test Similarity Search
+# 6. Test Similarity Search
 query="what is nlp and machine learning"
 similar_docs=vectordb.similarity_search(query,k=3)
 print("Top 2 similar documents for the query: ")
@@ -134,3 +134,87 @@ print("Top 3 similar documents with scores for the query: ")
 # for idx, (doc, score) in enumerate(results_score):
     # print(f"Document {idx+1} | Score: {score} | Content:\n{doc.page_content}\n")
 # ----------------------------------------------------------------------------------------------------------------------
+
+# Initialize LLM, RAG Chain, Prompt Templates etc. in the next steps for complete RAG implementation
+
+from langchain_openai import OpenAI
+
+llm=OpenAI(
+    model="gpt-3.5-turbo",
+    temperature=0,
+    max_tokens=500
+    )
+print("LLM initialized successfully.")
+
+
+# from langchain.chat_models.base import init_chat_model
+
+# llm=init_chat_model(
+#     "openai:gpt-3.5-turbo",
+#     )
+# print("Chat LLM initialized successfully.")
+
+# ----------------------------------------------------------------------------------------------------------------------
+
+# 7. Modern RAG Chain
+from langchain_core.prompts import ChatPromptTemplate
+from langchain import create_stuff_documents_chain
+
+
+#convert vector store to retriever
+retriever=vectordb.as_retriever(
+    search_kwargs={"k":3}
+    )
+
+#custom prompt template
+system_prompt="""
+you are an ai assitant for question-asnwering task,
+use the foloowing piece of retrieved context to answer the question at the end.
+if you dont know the answer, just say that I dont know, dont try to make up an answer.
+Use three sentences maximum for the answer to make the answer concise.
+
+content:{context}
+"""
+
+prompt=ChatPromptTemplate.from_messages([
+    ("system",system_prompt),
+    ("human","{input}")
+])
+
+document_chain= create_stuff_documents_chain(llm,prompt)
+
+
+from langchain import create_retrieval_chain
+rag_chain=create_retrieval_chain(retriever,document_chain)
+
+response=rag_chain.run(query)
+print(f"RAG Chain Response:\n{response}\n")
+
+
+
+# Function to query the modern RAG system
+def query_rag_modern(question):
+    print(f"Question: {question}")
+    print("-" * 50)
+
+    # Using create_retrieval_chain approach
+    result = rag_chain.invoke({"input": question})
+
+    print(f"Answer: {result['answer']}")
+    print("\nRetrieved Context:")
+    for i, doc in enumerate(result['context']):
+        print(f"\n--- Source {i+1} ---")
+        print(doc.page_content[:200] + "...")
+
+    return result
+
+# Test queries
+test_questions = [
+    "What are the three types of machine learning?",
+    "What is deep learning and how does it relate to neural networks?",
+    "What are CNNs best used for?"
+]
+
+for question in test_questions:
+    result = query_rag_modern(question)
+    print("\n" + "="*80 + "\n")
