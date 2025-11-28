@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import shutil
 
 load_dotenv()
 
@@ -87,9 +88,9 @@ print(f"{len(documents)} documents loaded successfully.")
 #3. Document Splitting
 text_splitter=RecursiveCharacterTextSplitter(
     chunk_size=500,
-    chunk_overlap=50,
+    chunk_overlap=20,
     length_function=len,
-    separators=[" "]
+    separators=[" ","\n","\n\n",". " ]
 )
 chunks=text_splitter.split_documents(documents)
 # print(f"{len(chunks)} chunks created from {len(documents)} documents successfully.")
@@ -105,6 +106,10 @@ embeddings=OpenAIEmbeddings()
 # ----------------------------------------------------------------------------------------------------------------------
 # 5. Creating Vector Store using ChromaDb and storing chunks in vector representation
 persist_directory="./chromadb_data"
+if os.path.exists(persist_directory):
+    shutil.rmtree(persist_directory)  # This deletes the old DB every time you run
+    print(f"Deleted existing directory: {persist_directory}")
+
 vectordb=Chroma.from_documents(
     documents=chunks,
     embedding=embeddings,
@@ -116,8 +121,16 @@ print(f"Vector Store created with {vectordb._collection.count()} vectors and per
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Test Similarity Search
-query="What are the types of machine learning?"
-similar_docs=vectordb.similarity_search(query,k=2)
+query="what is nlp and machine learning"
+similar_docs=vectordb.similarity_search(query,k=3)
 print("Top 2 similar documents for the query: ")
-for idx, doc in enumerate(similar_docs):
-    print(f"Document {idx+1} Content:\n{doc.page_content}\n")
+# for idx, doc in enumerate(similar_docs):
+    # print(f"Document {idx+1} Content:\n{doc.page_content}\n")
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Advanced search with scores
+# results_score = vectordb.similarity_search_with_score(query, k=3)
+print("Top 3 similar documents with scores for the query: ")
+# for idx, (doc, score) in enumerate(results_score):
+    # print(f"Document {idx+1} | Score: {score} | Content:\n{doc.page_content}\n")
+# ----------------------------------------------------------------------------------------------------------------------
