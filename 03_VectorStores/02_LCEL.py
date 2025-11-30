@@ -1,3 +1,6 @@
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough, RunnableParallel
+
 import os
 from dotenv import load_dotenv
 import shutil
@@ -117,20 +120,20 @@ vectordb=Chroma.from_documents(
     collection_name="rag_collection"
 )
 
-print(f"Vector Store created with {vectordb._collection.count()} vectors and persisted at {persist_directory} successfully.")
+# print(f"Vector Store created with {vectordb._collection.count()} vectors and persisted at {persist_directory} successfully.")
 
 # ----------------------------------------------------------------------------------------------------------------------
 # 6. Test Similarity Search
 query="what is nlp and machine learning"
 similar_docs=vectordb.similarity_search(query,k=3)
-print("Top 2 similar documents for the query: ")
+# print("Top 2 similar documents for the query: ")
 # for idx, doc in enumerate(similar_docs):
     # print(f"Document {idx+1} Content:\n{doc.page_content}\n")
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Advanced search with scores
 # results_score = vectordb.similarity_search_with_score(query, k=3)
-print("Top 3 similar documents with scores for the query: ")
+# print("Top 3 similar documents with scores for the query: ")
 # for idx, (doc, score) in enumerate(results_score):
     # print(f"Document {idx+1} | Score: {score} | Content:\n{doc.page_content}\n")
 # ----------------------------------------------------------------------------------------------------------------------
@@ -146,27 +149,6 @@ llm=OpenAI(
     )
 print("LLM initialized successfully.")
 
-
-# from langchain.chat_models.base import init_chat_model
-
-# llm=init_chat_model(
-#     "openai:gpt-3.5-turbo",
-#     )
-# print("Chat LLM initialized successfully.")
-
-# ----------------------------------------------------------------------------------------------------------------------
-
-# 7. Modern RAG Chain
-from langchain_core.prompts import ChatPromptTemplate
-from langchain import create_stuff_documents_chain
-
-
-#convert vector store to retriever
-retriever=vectordb.as_retriever(
-    search_kwargs={"k":3}
-    )
-
-#custom prompt template
 custom_prompt="""
 you are an ai assitant for question-asnwering task,
 use the foloowing piece of retrieved context to answer the question at the end.
@@ -174,47 +156,45 @@ if you dont know the answer, just say that I dont know, dont try to make up an a
 Use three sentences maximum for the answer to make the answer concise.
 
 content:{context}
+
+Question: {question}
+Answer:
 """
+# Build the chain using lcel
 
-prompt=ChatPromptTemplate.from_messages([
-    ("system",custom_prompt),
-    ("human","{input}")
-])
+retriever=vectordb.as_retriever(
+    search_kwargs={"k":3}
+    )
 
-document_chain= create_stuff_documents_chain(llm,prompt)
+rag_chain_lcel = (
+     {"context": retriever, "question": RunnablePassthrough() } 
+     | custom_prompt
+     | llm 
+     | StrOutputParser()
+)
 
+# response = rag_chain_lcel.invoke("What is Deep Learning")
 
-from langchain import create_retrieval_chain
-rag_chain=create_retrieval_chain(retriever,document_chain)
+# print(response)
 
-response=rag_chain.run(query)
-print(f"RAG Chain Response:\n{response}\n")
+# response1=retriever._get_relevant_documents("What is Deep Learning")
+# print(response1)
 
-
-
-# Function to query the modern RAG system
-def query_rag_modern(question):
+# Query using the LCEL approach - Fixed version
+def query_rag_lcel(question):
     print(f"Question: {question}")
     print("-" * 50)
 
-    # Using create_retrieval_chain approach
-    result = rag_chain.invoke({"input": question})
+    # Method 1: Pass string directly (when using RunnablePassthrough)
+    answer = rag_chain_lcel.invoke(question)
+    print(f"Answer: {answer}")
 
-    print(f"Answer: {result['answer']}")
-    print("\nRetrieved Context:")
-    for i, doc in enumerate(result['context']):
+    # Get source documents separately if needed
+    docs = retriever.get_relevant_documents(question)
+    print("\nSource Documents:")
+    for i, doc in enumerate(docs):
         print(f"\n--- Source {i+1} ---")
         print(doc.page_content[:200] + "...")
 
-    return result
-
-# Test queries
-test_questions = [
-    "What are the three types of machine learning?",
-    "What is deep learning and how does it relate to neural networks?",
-    "What are CNNs best used for?"
-]
-
-for question in test_questions:
-    result = query_rag_modern(question)
-    print("\n" + "="*80 + "\n")
+print("------------ Testing --------------")
+query_rag_lcel("What are the key concepts in Reinforcement Learning")
