@@ -124,8 +124,8 @@ vectordb=Chroma.from_documents(
 
 # ----------------------------------------------------------------------------------------------------------------------
 # 6. Test Similarity Search
-query="what is nlp and machine learning"
-similar_docs=vectordb.similarity_search(query,k=3)
+# query="what is nlp and machine learning"
+# similar_docs=vectordb.similarity_search(query,k=3)
 # print("Top 2 similar documents for the query: ")
 # for idx, doc in enumerate(similar_docs):
     # print(f"Document {idx+1} Content:\n{doc.page_content}\n")
@@ -140,16 +140,18 @@ similar_docs=vectordb.similarity_search(query,k=3)
 
 # Initialize LLM, RAG Chain, Prompt Templates etc. in the next steps for complete RAG implementation
 
-from langchain_openai import OpenAI
+from langchain_openai import ChatOpenAI
 
-llm=OpenAI(
+llm=ChatOpenAI(
     model="gpt-3.5-turbo",
     temperature=0,
     max_tokens=500
     )
 print("LLM initialized successfully.")
 
-custom_prompt="""
+from langchain_core.prompts import ChatPromptTemplate
+
+custom_prompt=ChatPromptTemplate.from_template("""
 you are an ai assitant for question-asnwering task,
 use the foloowing piece of retrieved context to answer the question at the end.
 if you dont know the answer, just say that I dont know, dont try to make up an answer.
@@ -159,7 +161,7 @@ content:{context}
 
 Question: {question}
 Answer:
-"""
+""")
 # Build the chain using lcel
 
 retriever=vectordb.as_retriever(
@@ -190,11 +192,11 @@ def query_rag_lcel(question):
     print(f"Answer: {answer}")
 
     # Get source documents separately if needed
-    docs = retriever.get_relevant_documents(question)
+    docs = retriever.invoke(question)
     print("\nSource Documents:")
     for i, doc in enumerate(docs):
         print(f"\n--- Source {i+1} ---")
         print(doc.page_content[:200] + "...")
 
 print("------------ Testing --------------")
-query_rag_lcel("What are the key concepts in Reinforcement Learning")
+query_rag_lcel("What is Nerual Learning")
