@@ -109,16 +109,22 @@ embeddings=OpenAIEmbeddings()
 # ----------------------------------------------------------------------------------------------------------------------
 # 5. Creating Vector Store using ChromaDb and storing chunks in vector representation
 persist_directory="./chromadb_data"
-if os.path.exists(persist_directory):
-    shutil.rmtree(persist_directory)  # This deletes the old DB every time you run
-    print(f"Deleted existing directory: {persist_directory}")
 
-vectordb=Chroma.from_documents(
-    documents=chunks,
-    embedding=embeddings,
-    persist_directory=persist_directory,
-    collection_name="rag_collection"
-)
+if os.path.exists(persist_directory):
+    print(f"Loading existing vector store from: {persist_directory}")
+    vectordb = Chroma(
+        persist_directory=persist_directory,
+        embedding_function=embeddings,
+        collection_name="rag_collection"
+    )
+else:
+    print(f"Creating new vector store at: {persist_directory}")
+    vectordb = Chroma.from_documents(
+        documents=chunks,
+        embedding=embeddings,
+        persist_directory=persist_directory,
+        collection_name="rag_collection"
+    )
 
 # print(f"Vector Store created with {vectordb._collection.count()} vectors and persisted at {persist_directory} successfully.")
 
@@ -170,6 +176,7 @@ retriever=vectordb.as_retriever(
 
 rag_chain_lcel = (
      {"context": retriever, "question": RunnablePassthrough() } 
+     
      | custom_prompt
      | llm 
      | StrOutputParser()
