@@ -1,0 +1,339 @@
+TABLE OF CONTENTS
+1. Introduction to LangChain
+2. Core Philosophy & Architecture
+3. Installation & Environment Setup
+4. Module 1: Model I/O
+5. Module 2: Data Connection (Retrieval)
+6. Module 3: Chains
+7. Module 4: Memory
+8. Module 5: Agents
+9. The Ecosystem: LangSmith & LangGraph
+10. Code Examples & Patterns
+11. Conclusion
+
+================================================================================
+1. INTRODUCTION TO LANGCHAIN
+================================================================================
+
+LangChain is an open-source framework designed to simplify the development of 
+applications powered by Large Language Models (LLMs). Before LangChain, 
+interacting with LLMs (like GPT-4, Llama, or Claude) was primarily done through 
+simple API calls. However, building complex applications required glue code to 
+manage context, chain logic, and connect to external data.
+
+LangChain provides this infrastructure. It allows developers to:
+- Connect LLMs to other sources of data (Data Awareness).
+- Allow an LLM to interact with its environment (Agentic behavior).
+
+It was launched by Harrison Chase in late 2022 and quickly became the standard 
+middleware for Generative AI development in Python and JavaScript/TypeScript.
+
+================================================================================
+2. CORE PHILOSOPHY & ARCHITECTURE
+================================================================================
+
+The framework is built around the concept of "Composability." 
+The core idea is that an LLM application is rarely just a single prompt and 
+response. It is a sequence of steps.
+
+The architecture is divided into several pillars:
+- LangChain Libraries: The Python and JS packages containing interfaces and 
+  integrations.
+- LangChain Templates: Reference architectures for specific tasks.
+- LangServe: A library for deploying LangChain chains as REST APIs.
+- LangSmith: A developer platform for debugging, testing, and monitoring.
+
+The "Chain" interface is the foundational building block. A Chain is essentially 
+a wrapper around a call to an LLM or another tool. By standardizing this 
+interface, LangChain allows you to swap models (e.g., switch from OpenAI to 
+Anthropic) with minimal code changes.
+
+================================================================================
+3. INSTALLATION & ENVIRONMENT SETUP
+================================================================================
+
+To get started with LangChain in Python, you typically install the core package 
+and specific integrations.
+
+Basic Installation:
+    pip install langchain
+
+Community Integrations (for specific tools):
+    pip install langchain-community
+
+OpenAI Integration:
+    pip install langchain-openai
+
+HuggingFace Integration:
+    pip install langchain-huggingface
+
+Environment Variables:
+Securely storing API keys is crucial.
+    import os
+    os.environ["OPENAI_API_KEY"] = "sk-..."
+    os.environ["HUGGINGFACEHUB_API_TOKEN"] = "hf-..."
+
+================================================================================
+4. MODULE 1: MODEL I/O
+================================================================================
+
+Model I/O refers to the inputs and outputs of the model. This module handles:
+
+A. Prompts
+   Prompts are the instructions sent to the LLM. LangChain provides 
+   'PromptTemplates' to manage dynamic inputs.
+   
+   Example:
+   from langchain_core.prompts import PromptTemplate
+   template = "Tell me a {adjective} joke about {topic}."
+   prompt = PromptTemplate.from_template(template)
+   prompt.format(adjective="funny", topic="chickens")
+
+B. LLMs vs. Chat Models
+   - LLMs take a string as input and return a string.
+   - Chat Models take a list of messages (SystemMessage, HumanMessage, AIMessage) 
+     and return a message.
+
+C. Output Parsers
+   LLMs output text, but apps often need structured data (JSON, Lists).
+   Parsers transform the raw text into usable data structures.
+   - PydanticOutputParser
+   - CommaSeparatedListOutputParser
+   - JsonOutputParser
+
+================================================================================
+5. MODULE 2: DATA CONNECTION (RETRIEVAL)
+================================================================================
+
+This is the backbone of RAG (Retrieval-Augmented Generation). 
+LLMs have a knowledge cutoff. To answer questions about private data or recent 
+events, you need to retrieve relevant info and pass it to the LLM.
+
+The pipeline consists of:
+
+1. Document Loaders:
+   Load data from sources.
+   - PyPDFLoader (PDFs)
+   - WebBaseLoader (URLs)
+   - CSVLoader (Spreadsheets)
+
+2. Document Transformers (Text Splitters):
+   LLMs have context windows. We must split large docs into chunks.
+   - RecursiveCharacterTextSplitter (Most common, splits by semantic separators)
+   - CharacterTextSplitter
+
+3. Text Embedding Models:
+   Convert text chunks into vector numbers (lists of floats).
+   - OpenAIEmbeddings
+   - HuggingFaceEmbeddings
+
+4. Vector Stores:
+   Databases optimized for storing and searching vectors.
+   - ChromaDB (Local/Open Source)
+   - Pinecone (Managed)
+   - FAISS (Facebook AI Similarity Search)
+
+5. Retrievers:
+   Algorithms to fetch the most relevant chunks based on a user query.
+   - VectorStoreRetriever
+   - MultiQueryRetriever
+   - ContextualCompressionRetriever
+
+================================================================================
+6. MODULE 3: CHAINS
+================================================================================
+
+Chains allow you to combine multiple components.
+
+A. LLMChain (Legacy but foundational)
+   Combines a PromptTemplate + LLM.
+
+B. Sequential Chains
+   The output of one chain becomes the input of the next.
+   - SimpleSequentialChain: Single input/output.
+   - SequentialChain: Multiple inputs/outputs.
+
+C. Router Chains
+   Dynamically select which chain to use based on the input.
+   Example: If the input is about math, route to the MathChain. If it's about 
+   history, route to the HistoryChain.
+
+D. LCEL (LangChain Expression Language)
+   The modern way to build chains using a declarative syntax with the pipe `|` 
+   operator.
+   
+   chain = prompt | model | output_parser
+
+================================================================================
+7. MODULE 4: MEMORY
+================================================================================
+
+By default, LLMs are stateless. They don't remember previous interactions.
+LangChain provides Memory components to manage conversation history.
+
+Types of Memory:
+1. ConversationBufferMemory:
+   Stores the entire conversation raw. Good for short context windows.
+
+2. ConversationBufferWindowMemory:
+   Keeps only the last K interactions (sliding window).
+
+3. ConversationSummaryMemory:
+   Uses an LLM to summarize the conversation over time and injects the summary 
+   into the prompt.
+
+4. VectorStoreRetrieverMemory:
+   Stores history in a vector database and retrieves relevant past interactions 
+   based on the current topic.
+
+================================================================================
+8. MODULE 5: AGENTS
+================================================================================
+
+Agents differ from Chains.
+- In a Chain, the sequence of actions is hardcoded.
+- In an Agent, the LLM acts as a reasoning engine to determine which actions 
+  to take and in what order.
+
+Core Components of an Agent:
+
+1. Tools:
+   Functions the agent can call.
+   - Calculator
+   - Google Search (SerpAPI)
+   - Wikipedia Lookup
+   - Custom Python Functions (@tool decorator)
+
+2. Toolkits:
+   Collections of tools for specific tasks (e.g., SQLDatabaseToolkit, 
+   PandasDataFrameToolkit).
+
+3. The Agent Executor:
+   The runtime for the agent. It runs the loop:
+   Thought -> Action -> Observation -> Thought...
+
+Common Agent Types:
+- Zero-shot ReAct: Uses the "Reasoning and Acting" framework.
+- OpenAI Functions Agent: Optimized for models capable of function calling.
+
+================================================================================
+9. THE ECOSYSTEM: LANGSMITH & LANGGRAPH
+================================================================================
+
+As LangChain evolved, two major additions appeared to handle complexity 
+and production needs.
+
+A. LangSmith
+   A unified platform for debugging. When chains become complex, it is hard to 
+   know why an output was generated.
+   - Tracing: See every step, input, and latency.
+   - Evaluation: Test chains against datasets.
+   - Monitoring: Track costs and errors in production.
+
+B. LangGraph
+   Standard LangChain is a DAG (Directed Acyclic Graph). It flows one way.
+   Agents often need loops (cycles).
+   LangGraph is a library for building stateful, multi-actor applications 
+   with LLMs. It allows for:
+   - Cyclic graphs (Loops)
+   - Persistence (Human-in-the-loop)
+   - Complex Agent coordination
+
+================================================================================
+10. CODE EXAMPLES & PATTERNS
+================================================================================
+
+Below is a pseudo-code representation of a classic RAG Pipeline using LCEL.
+
+--- RAG EXAMPLE START ---
+
+import bs4
+from langchain import hub
+from langchain_community.document_loaders import WebBaseLoader
+from langchain_chroma import Chroma
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from langchain_openai import OpenAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+# 1. Load Data
+loader = WebBaseLoader(
+    web_paths=("https://lilianweng.github.io/posts/2023-06-23-agent/",),
+    bs_kwargs=dict(
+        parse_only=bs4.SoupStrainer(
+            class_=("post-content", "post-title", "post-header")
+        )
+    ),
+)
+docs = loader.load()
+
+# 2. Split Data
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+splits = text_splitter.split_documents(docs)
+
+# 3. Index Data (Vector Store)
+vectorstore = Chroma.from_documents(documents=splits, embedding=OpenAIEmbeddings())
+retriever = vectorstore.as_retriever()
+
+# 4. Construct Chain
+prompt = hub.pull("rlm/rag-prompt")
+llm = ChatOpenAI(model="gpt-4o", temperature=0)
+
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
+
+rag_chain = (
+    {"context": retriever | format_docs, "question": RunnablePassthrough()}
+    | prompt
+    | llm
+    | StrOutputParser()
+)
+
+# 5. Execute
+response = rag_chain.invoke("What is Task Decomposition?")
+print(response)
+
+--- RAG EXAMPLE END ---
+
+--- CUSTOM TOOL EXAMPLE START ---
+
+from langchain.agents import tool
+
+@tool
+def get_word_length(word: str) -> int:
+    """Returns the length of a word."""
+    return len(word)
+
+tools = [get_word_length]
+
+# Bind tools to model
+llm_with_tools = llm.bind_tools(tools)
+# ... Initialize Agent Executor with this model and tools ...
+
+--- CUSTOM TOOL EXAMPLE END ---
+
+================================================================================
+11. CONCLUSION
+================================================================================
+
+LangChain has fundamentally changed how developers approach Generative AI. 
+By abstracting the complexities of context management, retrieval, and model 
+switching, it allows for rapid prototyping and robust production deployment.
+
+While the learning curve can be steep due to the rapid pace of updates (v0.1 to v0.2, 
+LCEL adoption, LangGraph introduction), the community support and documentation 
+are extensive.
+
+Key Takeaways:
+1. Use LCEL for building chains; it is the modern standard.
+2. Use LangSmith for observability; you cannot debug LLMs with print statements alone.
+3. Move to LangGraph for complex, looping agent behaviors.
+4. Always pin your versions in requirements.txt as the library evolves fast.
+
+Whether you are building a simple "Chat with PDF" tool or a complex autonomous 
+coding agent, LangChain provides the necessary primitives to bridge the gap 
+between a raw LLM and a functional application.
+
+================================================================================
+END OF FILE
+================================================================================
